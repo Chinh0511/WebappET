@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tra cứu điểm kiểm tra</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <?!= include('Score_Style'); ?>
+</head>
+
+<body>
+  <div class="topbar">
+    <button onclick="window.top.location.href='<?= baseUrl ?>'">
+      🏚️ Trang chủ
+    </button>
+  </div>
+  <h2>📊 TRA CỨU ĐIỂM KIỂM TRA</h2>
+  <div class="card">
+    <label>Phòng ban</label>
+    <select id="phongBan"></select>
+    <label>Bài kiểm tra</label>
+    <select id="baiThi"></select>
+    <div style="display:flex;gap:10px;">
+      <button onclick="loadData()">
+        Tìm kiếm
+      </button>
+      <button onclick="exportExcel()">
+        Xuất Excel
+      </button>
+    </div>
+  </div>
+  <div class="card dashboard">
+    <div class="leftPanel">
+      <div id="tongSo" class="stat"></div>
+      <div id="diemTB" class="stat"></div>
+      <div id="diemMax" class="stat"></div>
+      <div id="tyLeDat" class="stat"></div>
+    </div>
+    <div class="rightPanel">
+      <canvas id="scoreChart"></canvas>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Họ và tên</th>
+        <th>Phòng ban</th>
+        <th>Bài kiểm tra</th>
+        <th>Điểm %</th>
+      </tr>
+    </thead>
+    <tbody id="resultTable">
+    </tbody>
+  </table>
+  </div>
+  <script>
+    let scoreChart = null;
+    google.script.run
+      .withSuccessHandler(initFilters)
+      .getScoreFilters();
+    function initFilters(data) {
+      let pb = '<option>Tất cả</option>';
+      data.phongBan.forEach(function (item) {
+        pb += '<option>' + item + '</option>';
+      });
+      document.getElementById("phongBan").innerHTML = pb;
+      let bt = '<option>Tất cả</option>';
+      data.baiThi.forEach(function (item) {
+        bt += '<option>' + item + '</option>';
+      });
+      document.getElementById("baiThi").innerHTML = bt;
+      loadData();
+    }
+    function loadData() {
+      const phongBan =
+        document.getElementById("phongBan").value;
+      const baiThi =
+        document.getElementById("baiThi").value;
+      google.script.run
+        .withSuccessHandler(renderResult)
+        .searchScores(phongBan, baiThi);
+    }
+    function exportExcel() {
+
+      const phongBan = document.getElementById("phongBan").value;
+      const baiThi = document.getElementById("baiThi").value;
+
+      google.script.run
+        .withSuccessHandler(function (url) {
+          window.open(url, "_blank");
+        })
+        .withFailureHandler(function (err) {
+          alert(err.message);
+        })
+        .exportScoreExcel(phongBan, baiThi);
+
+    }
+    function renderResult(res) {
+      document.getElementById("tongSo").innerHTML =
+        "Tổng số: " + res.total;
+      document.getElementById("diemTB").innerHTML =
+        "Điểm trung bình: " + res.avg;
+      document.getElementById("diemMax").innerHTML =
+        "Điểm cao nhất: " + res.max;
+      document.getElementById("tyLeDat").innerHTML =
+        "Tỷ lệ đạt: " + res.passRate + "%";
+      let html = "";
+      res.rows.forEach(function (r) {
+        html +=
+          "<tr>" +
+          "<td>" + r.hoTen + "</td>" +
+          "<td>" + r.phongBan + "</td>" +
+          "<td>" + r.baiThi + "</td>" +
+          "<td class='diem'>" + r.diem + "</td>" +
+          "</tr>";
+      });
+      document.getElementById("resultTable").innerHTML = html;
+      drawChart(res.rows);
+    }
+    function drawChart(rows) {
+      const buckets = {
+        "Không đạt": 0,
+        "Đạt": 0,
+        "Khá": 0,
+        "Tốt": 0,
+        "Xuất sắc": 0
+      };
+      rows.forEach(function (r) {
+        const diem = Number(r.diem || 0);
+        if (diem < 80) {
+          buckets["Không đạt"]++;
+        }
+        else if (diem < 85) {
+          buckets["Đạt"]++;
+        }
+        else if (diem < 90) {
+          buckets["Khá"]++;
+        }
+        else if (diem < 95) {
+          buckets["Tốt"]++;
+        }
+        else {
+          buckets["Xuất sắc"]++;
+        }
+      });
+      const ctx =
+        document.getElementById("scoreChart");
+      if (scoreChart) {
+        scoreChart.destroy();
+      }
+      scoreChart = new Chart(ctx, {
+        plugins: [ChartDataLabels],
+        type: "bar",
+        data: {
+          labels: Object.keys(buckets),
+          datasets: [{
+            label: "Số người",
+            data: Object.values(buckets),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: "PHÂN BỐ KẾT QUẢ THEO MỨC ĐÁNH GIÁ",
+              font: {
+                size: 22
+              }
+            },
+            legend: {
+              display: false
+            },
+            datalabels: {
+              anchor: "end",
+              align: "top",
+              formatter: function (value) {
+                return value;
+              },
+              font: {
+                size: 18,
+                weight: "bold"
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              suggestedMax: Math.max(...Object.values(buckets)) + 3
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>

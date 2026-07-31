@@ -1,0 +1,10 @@
+{
+  "name": "et",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+  "push": "clasp push",
+  "pull": "clasp pull",
+  "release": "clasp push && clasp deploy --deploymentId AKfycbwHh8GQYCPdWEE28MOtY-MyiopQQGpmwL-apkamI_KS0tznyLUhCcWqImx5PdZBmUfk"
+}
+}

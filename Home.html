@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh mục tài liệu</title>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <?!= include('Home_Style'); ?>
+</head>
+<body>
+    <h1>📁 DANH MỤC TÀI LIỆU</h1>
+    <div class="container">
+        <? for (const f of folders) { ?>
+        <a href="<?= baseUrl ?>?page=<?= f.page ?>" class="card">
+            <img src="<?= f.icon ?>">
+            <span>
+                <?= f.name ?>
+            </span>
+        </a>
+        <? } ?>
+    </div>
+    <footer>© 2026 - Web App tài liệu nội bộ</footer>
+</body>
+
+</html>

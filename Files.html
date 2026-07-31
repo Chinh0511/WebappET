@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Danh sách file</title>
+<meta http-equiv="Cache-Control" content="no-cache">
+<?!= include('Files_Style'); ?>
+</head>
+<body>
+<div id="popupBox">
+  <div class="popupContent">
+    <div id="popupText"></div>
+    <button onclick="closePopup()">Đóng</button>
+  </div>
+</div>
+<div class="topbar">
+<button onclick="window.top.location.href='<?= baseUrl ?>'">
+🏚️ Trang chủ
+</button>
+<h2>📑 DANH SÁCH FILE</h2>
+<input id="searchBox"
+placeholder="🔎 Tìm tài liệu..."
+onkeyup="searchFile()">
+</div>
+<div id="fileList">
+<? for (const f of files) { ?>
+<? if (f.page) { ?>
+<? let parts = f.name.split(".");let num = parts[0] || "";let text = parts.length > 1 ? parts.slice(1).join(".").trim() : f.name;?>
+<div class="file">
+<a href="<?= baseUrl ?>?page=<?= f.page ?>&parent=<?= page ?>">
+<?= num ?>. <?= text ?>
+</a>
+</div>
+<? } else if (f.submenu) { ?>
+<? let subId = "sub_" + Math.random().toString(36).substring(2,10);let arrowId = "arrow_" + Math.random().toString(36).substring(2,10);?>
+<div class="file">
+<a class="toggle"
+onclick="toggleMenu('<?= subId ?>','<?= arrowId ?>')">
+<span id="<?= arrowId ?>">▶</span>
+<?= f.name ?>
+</a>
+</div>
+<div id="<?= subId ?>" class="submenu">
+<? for (const sub of f.submenu) { ?>
+<div class="file">
+<a target="_blank"
+href="<?= sub.url ?>">
+<?= sub.name ?>
+</a>
+</div>
+<? } ?>
+</div>
+<? } else if (f.id) { ?>
+<div class="file">
+<a target="_blank"
+href="https://drive.google.com/file/d/<?= f.id ?>/view">
+<?= f.name ?>
+</a>
+</div>
+<? } else if (f.url) { ?>
+<div class="file">
+<a target="_blank"
+href="<?= f.url ?>">
+<?= f.name ?>
+</a>
+</div>
+<? } else if (f.msg) { ?>
+<div class="file">
+<a
+onclick="showMsg(`<?= f.msg ?>`)"
+style="cursor:pointer;">
+<?= f.name ?>
+</a>
+</div>
+<? } else { ?>
+<div class="file info">
+<?= f.name ?>
+</div>
+<? } ?>
+<? } ?>
+</div>
+<script>
+function showMsg(text){
+    document.getElementById("popupText").innerHTML=text;
+    document.getElementById("popupBox").style.display="flex";
+}
+function closePopup(){
+    document.getElementById("popupBox").style.display="none";
+}
+function searchFile(){
+    let input=document.getElementById("searchBox").value.toLowerCase();
+    let items=document.querySelectorAll("#fileList .file");
+    items.forEach(function(item){
+        let text=item.innerText.toLowerCase();
+        item.style.display=text.includes(input)?"flex":"none";
+    });
+}
+function toggleMenu(menuId,arrowId){
+    const menu=document.getElementById(menuId);
+    const arrow=document.getElementById(arrowId);
+    if(menu.style.display==="block"){
+        menu.style.display="none";
+        arrow.innerHTML="▶";
+    }else{
+        menu.style.display="block";
+        arrow.innerHTML="▼";
+    }
+}
+</script>
+<footer>
+© 2026 - Web App tài liệu nội bộ
+</footer>
+</body>
+</html>
